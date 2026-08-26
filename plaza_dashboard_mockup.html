@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLAZA CREATE 経営管理ダッシュボード（モックアップ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root{
+    --purple:#14406B; --blue:#185FA5; --pink:#2E7BC4; --green:#5B9BD9;
+    --ink:#1C1C1A; --sub:#6B6A64; --muted:#9B9A93;
+    --bg:#F6F5F1; --card:#FFFFFF; --line:#E4E2D9;
+    --good:#1E7A3D; --bad:#C23B3B;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",sans-serif;}
+  .brandstrip{display:flex;height:6px;}
+  .brandstrip div{flex:1;}
+  header.top{padding:20px 32px 0;}
+  .toprow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .brandmark{display:flex;align-items:center;gap:12px;}
+  .logo{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;}
+  .brandtext h1{margin:0;font-size:18px;font-weight:700;}
+  .brandtext p{margin:0;font-size:12px;color:var(--sub);}
+  .controls{display:flex;gap:8px;}
+  .period-select{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 12px;font-size:12px;color:var(--ink);font-family:inherit;cursor:pointer;}
+  .period-select:focus{outline:none;border-color:var(--ink);}
+  nav.tabs{display:flex;gap:4px;margin:20px 32px 0;border-bottom:1px solid var(--line);overflow-x:auto;}
+  nav.tabs button{border:none;background:none;padding:12px 18px;font-size:14px;font-weight:500;color:var(--sub);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font-family:inherit;}
+  nav.tabs button.active{color:var(--ink);border-bottom-color:var(--ink);}
+  main{padding:24px 32px 60px;max-width:1200px;margin:0 auto;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:16px;}
+  .kpi-card{background:var(--card);border-top:4px solid var(--accent,#333);border-radius:10px;padding:18px 20px;}
+  .kpi-card .head{cursor:pointer;}
+  .kpi-card.no-expand .head{cursor:default;}
+  .kpi-card .label{font-size:13px;color:var(--sub);margin:0 0 8px;display:flex;align-items:center;gap:6px;}
+  .kpi-card .label .chev{display:inline-block;transition:transform .15s;color:var(--muted);font-size:11px;}
+  .kpi-card.open .label .chev{transform:rotate(90deg);}
+  .kpi-card .value{font-size:30px;font-weight:700;margin:0 0 6px;}
+  .kpi-card .rate{font-size:13px;font-weight:500;margin:0;}
+  .kpi-card .progress{position:relative;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:10px;}
+  .kpi-card .progress .fill{position:absolute;top:0;left:0;bottom:0;border-radius:3px;}
+  .kpi-detail{display:none;background:var(--card);border-radius:10px;padding:18px 20px;margin-bottom:20px;}
+  .kpi-detail.show{display:block;}
+  .section-title{font-size:14px;font-weight:500;color:var(--sub);margin:24px 0 10px;}
+  .section-title .hint{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px;}
+  .div-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+  .div-card{background:var(--card);border-top:3px solid var(--accent,#333);border-radius:10px;padding:14px 16px;cursor:pointer;transition:transform .12s;}
+  .div-card.selected{box-shadow:0 0 0 2px var(--ink) inset;}
+  .div-card:hover{transform:translateY(-2px);}
+  .div-card .name{font-size:12px;color:var(--sub);margin:0 0 6px;}
+  .div-card .value{font-size:20px;font-weight:700;margin:0 0 4px;}
+  .div-card .rate{font-size:12px;margin:0;}
+  .split-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:24px;}
+  .split-row .kpi-col{flex:0 0 340px;}
+  .split-row .chart-col{flex:1;min-width:340px;}
+  .chart-card{background:var(--card);border-radius:10px;padding:20px;margin-top:20px;}
+  .chart-card h3{font-size:14px;font-weight:500;color:var(--sub);margin:0 0 14px;}
+  .chart-scroll{max-height:520px;overflow-y:auto;border:1px solid var(--bg);border-radius:8px;padding:8px 4px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .search-box{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:var(--ink);}
+  .search-box:focus{outline:none;border-color:var(--ink);}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;color:var(--sub);cursor:pointer;user-select:none;}
+  .chip.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .metric-block{margin-bottom:20px;}
+  .metric-block:last-child{margin-bottom:0;}
+  .metric-block-title{font-size:12px;font-weight:500;color:var(--sub);margin:0 0 8px;}
+  .sort-dir-btn{height:34px;width:34px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:var(--ink);}
+  .sort-dir-btn:hover{background:var(--bg);}
+  .hint-text{font-size:12px;color:var(--muted);margin:0;}
+  .acct-scroll{max-height:420px;overflow-y:auto;border:1px solid var(--bg);border-radius:8px;}
+  .acct-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .acct-table tr:first-child th{position:sticky;top:0;background:var(--card);z-index:1;}
+  .result-kpi{border-top:4px solid var(--accent,#333);border-radius:10px;padding:16px 18px;margin-bottom:16px;background:var(--bg);}
+  .result-kpi .label{font-size:13px;color:var(--sub);margin:0 0 6px;}
+  .result-kpi .value{font-size:26px;font-weight:700;margin:0 0 4px;}
+  .result-kpi .rate{font-size:13px;font-weight:500;margin:0;}
+  .result-kpi .progress{position:relative;height:6px;background:var(--card);border-radius:3px;overflow:hidden;margin-top:10px;}
+  .result-kpi .progress .fill{position:absolute;top:0;left:0;bottom:0;border-radius:3px;}
+  .acct-table th{text-align:right;color:var(--muted);font-weight:500;padding:4px 6px;white-space:nowrap;}
+  .acct-table td{white-space:nowrap;}
+  .acct-table th:first-child{text-align:left;}
+  .acct-table td{text-align:right;padding:4px 6px;border-top:1px solid var(--bg);}
+  .acct-table td:first-child{text-align:left;color:var(--sub);}
+  .acct-table tr.total td{font-weight:700;color:var(--ink);border-top:1px solid var(--line);}
+  .kpi-card .acct-table td{border-top:1px solid var(--bg);}
+  footer{text-align:center;padding:20px;font-size:11px;color:var(--muted);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(28,28,26,0.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+  .modal-card{background:#fff;border-radius:10px;padding:22px 24px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;}
+  .modal-header h3{margin:0;font-size:14px;font-weight:500;color:var(--ink);}
+  .modal-close{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+  .modal-close:hover{background:var(--bg);}
+  .acct-table td.clickable{cursor:pointer;}
+  .acct-table td.clickable:hover{background:var(--bg);text-decoration:underline;}
+
+  /* ===== Sidebar layout ===== */
+  .app-layout{display:flex;min-height:100vh;}
+  .sidebar{width:260px;flex-shrink:0;background:#111827;color:#E8E7F0;display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto;}
+  .sidebar-brand{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .sidebar-brand .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+  .sidebar-brand .brandtext{line-height:1.3;}
+  .sidebar-brand .brandtext strong{display:block;font-size:14px;}
+  .sidebar-brand .brandtext span{display:block;font-size:10px;color:#9490A8;}
+  .sidebar-tree{flex:1;padding:14px 10px;}
+  .tree-label{font-size:10px;color:#7A76900;color:#8B87A0;text-transform:uppercase;letter-spacing:.04em;padding:6px 12px;margin-top:6px;}
+  .tree-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;font-size:13px;color:#C7C5D6;cursor:pointer;margin-bottom:2px;white-space:nowrap;}
+  .tree-item:hover{background:rgba(255,255,255,0.06);}
+  .tree-item.active{background:rgba(255,255,255,0.12);color:#fff;font-weight:500;box-shadow:inset 3px 0 0 0 var(--accent,#8B87A0);}
+  .tree-item.top{font-weight:500;color:#fff;margin-top:10px;}
+  .tree-item.sub{padding-left:30px;font-size:12.5px;}
+  .tree-item .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0;}
+  .tree-group-icon{width:16px;text-align:center;flex-shrink:0;}
+  .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;}
+  .sidebar-footer .avatar{width:30px;height:30px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+  .sidebar-footer .who{line-height:1.3;}
+  .sidebar-footer .who strong{display:block;font-size:12px;color:#fff;}
+  .sidebar-footer .who span{display:block;font-size:10px;color:#8B87A0;}
+  .content-area{flex:1;min-width:0;}
+  .content-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:22px 32px 0;}
+  .content-header .crumb{font-size:12px;color:var(--sub);margin:0 0 4px;}
+  .content-header h1{margin:0;font-size:22px;font-weight:700;}
+
+  /* ===== Icon KPI cards ===== */
+  .icon-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:8px;margin-bottom:20px;}
+  .icon-kpi-card{background:var(--card);border-radius:12px;padding:16px 18px;position:relative;}
+  .icon-kpi-card .top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .icon-kpi-card .label{font-size:12.5px;color:var(--sub);margin:0;}
+  .icon-kpi-card .icon-badge{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .icon-kpi-card .value{font-size:24px;font-weight:700;line-height:1.2;}
+  .icon-kpi-card .value .unit{font-size:13px;font-weight:500;color:var(--sub);margin-left:2px;}
+  .icon-kpi-card .trend{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:12px;margin-top:8px;}
+  .icon-kpi-card .trend.up{background:#E5F3EA;color:var(--good);}
+  .icon-kpi-card .trend.down{background:#FBE9E9;color:var(--bad);}
+  .icon-kpi-card .trend-label{font-size:11px;color:var(--muted);margin-left:4px;}
+
+  /* ===== Combo + donut chart row ===== */
+  .viz-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .viz-card{background:var(--card);border-radius:12px;padding:20px;}
+  .viz-card.combo{flex:1.6;min-width:360px;}
+  .viz-card.donut{flex:1;min-width:260px;}
+  .viz-card .viz-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+  .viz-card .viz-title h3{margin:0;font-size:14px;font-weight:700;}
+  .viz-card .viz-title span{font-size:11px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:6px;}
+  .donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-size:12px;}
+  .donut-legend .row{display:flex;align-items:center;gap:8px;}
+  .donut-legend .swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .donut-legend .name{flex:1;color:var(--sub);}
+  .donut-legend .pct{font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">PC</div>
+      <div class="brandtext">
+        <strong>PLAZA CREATE</strong>
+        <span>経営管理ダッシュボード</span>
+      </div>
+    </div>
+    <nav class="sidebar-tree" id="tabnav">
+      <div class="tree-item top active" data-tab="all" style="--accent:#fff">
+        <span class="tree-group-icon">🏢</span>全社（合計）
+      </div>
+
+      <div class="tree-item top" data-tab="consumer" style="--accent:var(--purple)">
+        <span class="tree-group-icon">🔒</span>コンシューマー事業本部
+      </div>
+      <div class="tree-item sub" data-tab="consumer_kitanihon" style="--accent:var(--purple)"><span class="dot"></span>北日本営業部</div>
+      <div class="tree-item sub" data-tab="consumer_kanto" style="--accent:var(--purple)"><span class="dot"></span>関東営業部</div>
+      <div class="tree-item sub" data-tab="consumer_chubu" style="--accent:var(--purple)"><span class="dot"></span>中部営業部</div>
+      <div class="tree-item sub" data-tab="consumer_nishinihon" style="--accent:var(--purple)"><span class="dot"></span>西日本営業部</div>
+
+      <div class="tree-item top" data-tab="imaging" style="--accent:var(--blue)"><span class="tree-group-icon">🖼</span>イメージング事業本部</div>
+
+      <div class="tree-item top" data-tab="corp" style="--accent:var(--pink)"><span class="tree-group-icon">📇</span>法人事業本部</div>
+
+      <div class="tree-item top" data-tab="souzou" style="--accent:var(--green)"><span class="tree-group-icon">🌐</span>ソウゾウ事業本部</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">経</div>
+      <div class="who"><strong>経理部ユーザー</strong><span>管理者</span></div>
+    </div>
+  </aside>
+
+  <div class="content-area">
+    <div class="brandstrip">
+      <div style="background:var(--purple)"></div>
+      <div style="background:var(--blue)"></div>
+      <div style="background:var(--pink)"></div>
+      <div style="background:var(--green)"></div>
+    </div>
+    <div class="content-header">
+      <div>
+        <p class="crumb">選択中の組織</p>
+        <h1 id="page-title">全社（合計）</h1>
+      </div>
+      <div class="controls">
+        <select class="period-select" id="from-select"></select>
+        <span style="font-size:12px;color:var(--sub);">から</span>
+        <select class="period-select" id="to-select"></select>
+      </div>
+    </div>
+
+<main>
+
+  <section class="panel active" id="panel-all">
+
+    <div class="kpi-row">
+      <div class="kpi-card" style="--accent:var(--ink)" data-key="all-op" data-base-value="824" data-base-rate="87.6">
+        <div class="head">
+          <p class="label"><span class="chev">▶</span>営業損益金額</p>
+          <p class="value">8.24億円</p>
+          <p class="rate bad">達成率 87.6%</p>
+        </div>
+      </div>
+      <div class="kpi-card no-expand" style="--accent:var(--ink)" data-key="all-gross" data-base-value="6117" data-base-rate="113.4">
+        <div class="head">
+          <p class="label">売上総損益金額</p>
+          <p class="value">61.17億円</p>
+          <p class="rate good">達成率 113.4%</p>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-detail" id="kpidetail-all-op"></div>
+
+    <div class="icon-kpi-row" id="iconkpi-all"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-all" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-all"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-all"></canvas></div>
+        <div class="donut-legend" id="donutlegend-all"></div>
+      </div>
+    </div>
+
+    <p class="section-title">事業本部別 営業損益金額</p>
+    <div class="div-grid" id="div-grid">
+      <div class="div-card" style="--accent:var(--purple)" onclick="switchTab('consumer')">
+        <p class="name">コンシューマー事業</p>
+        <p class="value">9.18億円</p>
+        <p class="rate good">達成率 99.0%</p>
+      </div>
+      <div class="div-card" style="--accent:var(--blue)" onclick="switchTab('imaging')">
+        <p class="name">イメージング事業</p>
+        <p class="value">-6,566万円</p>
+        <p class="rate bad">達成率 91.2%</p>
+      </div>
+      <div class="div-card" style="--accent:var(--pink)" onclick="switchTab('corp')">
+        <p class="name">法人事業</p>
+        <p class="value">2,574万円</p>
+        <p class="rate good">達成率 104.3%</p>
+      </div>
+      <div class="div-card" style="--accent:var(--green)" onclick="switchTab('souzou')">
+        <p class="name">ソウゾウ事業（管理）</p>
+        <p class="value">-5,329万円</p>
+        <p class="rate bad">達成率 88.5%</p>
+      </div>
+    </div>
+
+    <p class="section-title">事業本部別比較<span class="hint">（事業本部名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-companywide" placeholder="事業本部名で絞り込み...">
+        <select class="search-box" id="sortfield-companywide">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-companywide" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-companywide">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-companywide"></div>
+      <div id="charts-companywide"></div>
+    </div>
+    <div id="result-companywide" class="chart-card"></div>
+
+    <div class="chart-card">
+      <h3>営業損益金額の月次推移（百万円）</h3>
+      <div style="position:relative;height:260px;">
+        <canvas id="chart-all"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-consumer">
+    <div class="split-row">
+      <div class="kpi-col">
+        <div class="kpi-card" style="--accent:var(--purple)" data-key="consumer" data-base-value="918" data-base-rate="99.0">
+          <div class="head">
+            <p class="label"><span class="chev">▶</span>コンシューマー事業 営業損益金額</p>
+            <p class="value">9.18億円</p>
+            <p class="rate good">達成率 99.0%</p>
+          </div>
+        </div>
+      </div>
+      <div class="chart-col">
+        <p class="section-title" style="margin-top:0;">営業部別サマリー<span class="hint">（クリックで下の店舗一覧が連動して絞り込まれます）</span></p>
+        <div class="div-grid" id="region-grid">
+          <div class="div-card" style="--accent:var(--purple)" data-region="北日本営業部">
+            <p class="name">北日本営業部</p>
+            <p class="value">-</p>
+            <p class="rate">-</p>
+          </div>
+          <div class="div-card" style="--accent:var(--purple)" data-region="関東営業部">
+            <p class="name">関東営業部</p>
+            <p class="value">-</p>
+            <p class="rate">-</p>
+          </div>
+          <div class="div-card" style="--accent:var(--purple)" data-region="中部営業部">
+            <p class="name">中部営業部</p>
+            <p class="value">-</p>
+            <p class="rate">-</p>
+          </div>
+          <div class="div-card" style="--accent:var(--purple)" data-region="西日本営業部">
+            <p class="name">西日本営業部</p>
+            <p class="value">-</p>
+            <p class="rate">-</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-detail" id="kpidetail-consumer"></div>
+
+    <div class="icon-kpi-row" id="iconkpi-consumer"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-consumer" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-consumer"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-consumer"></canvas></div>
+        <div class="donut-legend" id="donutlegend-consumer"></div>
+      </div>
+    </div>
+
+    <p class="section-title">営業部別比較<span class="hint">（営業部名をクリックで詳細表示／比較に追加、下の店舗一覧も連動して絞り込まれます、最大5件）</span></p>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-consumer_regions" placeholder="営業部名で絞り込み...">
+        <select class="search-box" id="sortfield-consumer_regions">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-consumer_regions" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-consumer_regions">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-consumer_regions"></div>
+      <div id="charts-consumer_regions"></div>
+    </div>
+    <div id="result-consumer_regions" class="chart-card"></div>
+
+    <p class="section-title">店舗別比較<span class="hint">（店舗名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+    <div id="regionfilter-consumer"></div>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-consumer" placeholder="店舗名で絞り込み...">
+        <select class="search-box" id="sortfield-consumer">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-consumer" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-consumer">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-consumer"></div>
+      <div id="charts-consumer"></div>
+    </div>
+    <div id="result-consumer" class="chart-card"></div>
+  </section>
+
+
+  <section class="panel" id="panel-imaging">
+    <div class="split-row">
+      <div class="kpi-col">
+        <div class="kpi-card" style="--accent:var(--blue)" data-key="imaging" data-base-value="-66" data-base-rate="91.2">
+          <div class="head">
+            <p class="label"><span class="chev">▶</span>イメージング事業 営業損益金額</p>
+            <p class="value">-6,566万円</p>
+            <p class="rate bad">達成率 91.2%</p>
+          </div>
+        </div>
+      </div>
+      <div class="chart-col">
+        <p class="section-title" style="margin-top:0;">部門別比較<span class="hint">（部門名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+        <div class="chart-card" style="margin-top:0;">
+          <div class="toolbar">
+            <input type="text" class="search-box" id="search-imaging" placeholder="部門名で絞り込み...">
+            <select class="search-box" id="sortfield-imaging">
+              <option value="pct">並び替え: 達成率</option>
+              <option value="budget">並び替え: 予算</option>
+              <option value="actual">並び替え: 実績</option>
+              <option value="name">並び替え: 名称</option>
+            </select>
+            <button class="sort-dir-btn" id="sortdir-imaging" title="昇順/降順を切り替え">▼</button>
+            <button class="chip" id="onlyselected-imaging">選択した項目のみ表示</button>
+          </div>
+          <div class="chip-row" id="metricchips-imaging"></div>
+          <div id="charts-imaging"></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-detail" id="kpidetail-imaging"></div>
+
+    <div class="icon-kpi-row" id="iconkpi-imaging"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-imaging" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-imaging"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-imaging"></canvas></div>
+        <div class="donut-legend" id="donutlegend-imaging"></div>
+      </div>
+    </div>
+    <div id="result-imaging" class="chart-card"></div>
+  </section>
+
+  <section class="panel" id="panel-corp">
+    <div class="split-row">
+      <div class="kpi-col">
+        <div class="kpi-card" style="--accent:var(--pink)" data-key="corp" data-base-value="26" data-base-rate="104.3">
+          <div class="head">
+            <p class="label"><span class="chev">▶</span>法人事業 営業損益金額</p>
+            <p class="value">2,574万円</p>
+            <p class="rate good">達成率 104.3%</p>
+          </div>
+        </div>
+      </div>
+      <div class="chart-col">
+        <p class="section-title" style="margin-top:0;">部門別比較<span class="hint">（部門名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+        <div class="chart-card" style="margin-top:0;">
+          <div class="toolbar">
+            <input type="text" class="search-box" id="search-corp" placeholder="部門名で絞り込み...">
+            <select class="search-box" id="sortfield-corp">
+              <option value="pct">並び替え: 達成率</option>
+              <option value="budget">並び替え: 予算</option>
+              <option value="actual">並び替え: 実績</option>
+              <option value="name">並び替え: 名称</option>
+            </select>
+            <button class="sort-dir-btn" id="sortdir-corp" title="昇順/降順を切り替え">▼</button>
+            <button class="chip" id="onlyselected-corp">選択した項目のみ表示</button>
+          </div>
+          <div class="chip-row" id="metricchips-corp"></div>
+          <div id="charts-corp"></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-detail" id="kpidetail-corp"></div>
+
+    <div class="icon-kpi-row" id="iconkpi-corp"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-corp" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-corp"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-corp"></canvas></div>
+        <div class="donut-legend" id="donutlegend-corp"></div>
+      </div>
+    </div>
+    <div id="result-corp" class="chart-card"></div>
+  </section>
+
+  <section class="panel" id="panel-souzou">
+    <div class="split-row">
+      <div class="kpi-col">
+        <div class="kpi-card" style="--accent:var(--green)" data-key="souzou" data-base-value="-53" data-base-rate="88.5">
+          <div class="head">
+            <p class="label"><span class="chev">▶</span>ソウゾウ事業（管理） 営業損益金額</p>
+            <p class="value">-5,329万円</p>
+            <p class="rate bad">達成率 88.5%</p>
+          </div>
+        </div>
+      </div>
+      <div class="chart-col">
+        <p class="section-title" style="margin-top:0;">部門別比較<span class="hint">（部門名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+        <div class="chart-card" style="margin-top:0;">
+          <div class="toolbar">
+            <input type="text" class="search-box" id="search-souzou" placeholder="部門名で絞り込み...">
+            <select class="search-box" id="sortfield-souzou">
+              <option value="pct">並び替え: 達成率</option>
+              <option value="budget">並び替え: 予算</option>
+              <option value="actual">並び替え: 実績</option>
+              <option value="name">並び替え: 名称</option>
+            </select>
+            <button class="sort-dir-btn" id="sortdir-souzou" title="昇順/降順を切り替え">▼</button>
+            <button class="chip" id="onlyselected-souzou">選択した項目のみ表示</button>
+          </div>
+          <div class="chip-row" id="metricchips-souzou"></div>
+          <div id="charts-souzou"></div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-detail" id="kpidetail-souzou"></div>
+
+    <div class="icon-kpi-row" id="iconkpi-souzou"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-souzou" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-souzou"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-souzou"></canvas></div>
+        <div class="donut-legend" id="donutlegend-souzou"></div>
+      </div>
+    </div>
+    <div id="result-souzou" class="chart-card"></div>
+  </section>
+  <section class="panel" id="panel-consumer_kitanihon">
+    <div class="icon-kpi-row" id="iconkpi-consumer_kitanihon"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-consumer_kitanihon" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-consumer_kitanihon"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-consumer_kitanihon"></canvas></div>
+        <div class="donut-legend" id="donutlegend-consumer_kitanihon"></div>
+      </div>
+    </div>
+    <p class="section-title" style="margin-top:0;">店舗別比較<span class="hint">（店舗名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-consumer_kitanihon" placeholder="店舗名で絞り込み...">
+        <select class="search-box" id="sortfield-consumer_kitanihon">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-consumer_kitanihon" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-consumer_kitanihon">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-consumer_kitanihon"></div>
+      <div id="charts-consumer_kitanihon"></div>
+    </div>
+    <div id="result-consumer_kitanihon" class="chart-card"></div>
+  </section>
+
+  <section class="panel" id="panel-consumer_kanto">
+    <div class="icon-kpi-row" id="iconkpi-consumer_kanto"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-consumer_kanto" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-consumer_kanto"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-consumer_kanto"></canvas></div>
+        <div class="donut-legend" id="donutlegend-consumer_kanto"></div>
+      </div>
+    </div>
+    <p class="section-title" style="margin-top:0;">店舗別比較<span class="hint">（店舗名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-consumer_kanto" placeholder="店舗名で絞り込み...">
+        <select class="search-box" id="sortfield-consumer_kanto">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-consumer_kanto" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-consumer_kanto">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-consumer_kanto"></div>
+      <div id="charts-consumer_kanto"></div>
+    </div>
+    <div id="result-consumer_kanto" class="chart-card"></div>
+  </section>
+
+  <section class="panel" id="panel-consumer_chubu">
+    <div class="icon-kpi-row" id="iconkpi-consumer_chubu"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-consumer_chubu" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-consumer_chubu"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-consumer_chubu"></canvas></div>
+        <div class="donut-legend" id="donutlegend-consumer_chubu"></div>
+      </div>
+    </div>
+    <p class="section-title" style="margin-top:0;">店舗別比較<span class="hint">（店舗名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-consumer_chubu" placeholder="店舗名で絞り込み...">
+        <select class="search-box" id="sortfield-consumer_chubu">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-consumer_chubu" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-consumer_chubu">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-consumer_chubu"></div>
+      <div id="charts-consumer_chubu"></div>
+    </div>
+    <div id="result-consumer_chubu" class="chart-card"></div>
+  </section>
+
+  <section class="panel" id="panel-consumer_nishinihon">
+    <div class="icon-kpi-row" id="iconkpi-consumer_nishinihon"></div>
+    <div class="viz-row">
+      <div class="viz-card combo">
+        <div class="viz-title"><h3>実績・予算 推移</h3><select class="search-box" id="combo-metric-consumer_nishinihon" style="height:28px;font-size:11px;padding:0 8px;"><option value="営業利益">営業利益（全体）</option><option value="売上高計">売上高</option><option value="売上総利益">売上総利益</option><option value="人件費計">人件費</option></select></div><div style="position:relative;height:260px;"><canvas id="combo-consumer_nishinihon"></canvas></div>
+      </div>
+      <div class="viz-card donut">
+        <div class="viz-title"><h3>内訳 売上構成比</h3></div>
+        <div style="position:relative;height:180px;"><canvas id="donut-consumer_nishinihon"></canvas></div>
+        <div class="donut-legend" id="donutlegend-consumer_nishinihon"></div>
+      </div>
+    </div>
+    <p class="section-title" style="margin-top:0;">店舗別比較<span class="hint">（店舗名をクリックで詳細表示／比較に追加、最大5件）</span></p>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="search-consumer_nishinihon" placeholder="店舗名で絞り込み...">
+        <select class="search-box" id="sortfield-consumer_nishinihon">
+          <option value="pct">並び替え: 達成率</option>
+          <option value="budget">並び替え: 予算</option>
+          <option value="actual">並び替え: 実績</option>
+          <option value="name">並び替え: 名称</option>
+        </select>
+        <button class="sort-dir-btn" id="sortdir-consumer_nishinihon" title="昇順/降順を切り替え">▼</button>
+        <button class="chip" id="onlyselected-consumer_nishinihon">選択した項目のみ表示</button>
+      </div>
+      <div class="chip-row" id="metricchips-consumer_nishinihon"></div>
+      <div id="charts-consumer_nishinihon"></div>
+    </div>
+    <div id="result-consumer_nishinihon" class="chart-card"></div>
+  </section>
+
+</main>
+
+<footer>このページは検討用のモックアップです。数値はすべてサンプルです。年度・月を変更すると、サンプルの倍率に応じて数字が変わります。</footer>
+  </div>
+</div>
+
+<div id="ledger-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeLedgerModal()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="ledger-modal-title"></h3>
+      <button class="modal-close" onclick="closeLedgerModal()">閉じる</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="search-box" id="ledger-modal-search" placeholder="取引日・品目・金額で検索..." style="width:100%;max-width:none;margin-bottom:10px;">
+      <table class="acct-table" id="ledger-modal-table"></table>
+      <p style="font-size:11px;color:var(--muted);margin:14px 0 0;">この明細はサンプルデータです。実際のデータ連携時はfreeeの仕訳データと接続します。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+const rowHighlightPlugin = {
+  id: 'rowHighlight',
+  beforeDatasetsDraw(chart) {
+    const selected = chart.$selectedRows;
+    if (!selected || !selected.length) return;
+    const { ctx, chartArea, data } = chart;
+    const n = data.labels.length;
+    if (!n || !chartArea) return;
+    const rowH = chartArea.height / n;
+    ctx.save();
+    ctx.fillStyle = 'rgba(28,28,26,0.08)';
+    selected.forEach(idx => {
+      const top = chartArea.top + idx * rowH;
+      ctx.fillRect(0, top, chart.width, rowH);
+    });
+    ctx.restore();
+  }
+};
+Chart.register(rowHighlightPlugin);
+
+const PAGE_TITLES = {
+  all: '全社（合計）',
+  consumer: 'コンシューマー事業本部（事業本部合計）',
+  consumer_kitanihon: '北日本営業部',
+  consumer_kanto: '関東営業部',
+  consumer_chubu: '中部営業部',
+  consumer_nishinihon: '西日本営業部',
+  imaging: 'イメージング事業本部',
+  corp: '法人事業本部',
+  souzou: 'ソウゾウ事業本部'
+};
+
+function switchTab(id){
+  document.querySelectorAll('.tree-item[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+  const titleEl = document.getElementById('page-title');
+  if (titleEl && PAGE_TITLES[id]) titleEl.textContent = PAGE_TITLES[id];
+}
+document.querySelectorAll('.tree-item[data-tab]').forEach(b => {
+  b.addEventListener('click', () => switchTab(b.dataset.tab));
+});
+
+function splitExact(total, ratios, names) {
+  const vals = [];
+  let used = 0;
+  for (let i = 0; i < ratios.length - 1; i++) {
+    const v = Math.round(total * ratios[i]);
+    vals.push(v);
+    used += v;
+  }
+  vals.push(total - used);
+  return names.map((n, i) => ({ name: n, v: vals[i] }));
+}
+
+function detailedPL(revenueYen, grossProfitYen, opProfitYen) {
+  const rows = [];
+  const cogs = revenueYen - grossProfitYen;
+  const sgna = grossProfitYen - opProfitYen;
+
+  const revSplit = splitExact(revenueYen, [0.78, 0.15, 0.07], ['商品売上計', 'サービス事業収入', 'リース事業収入']);
+  const productTotal = revSplit[0].v, serviceRevenue = revSplit[1].v, leaseRevenue = revSplit[2].v;
+  const productSplit = splitExact(productTotal, [1.02, -0.02], ['商品売上高', '商品売上値引']);
+  rows.push({name:'商品売上高', v: productSplit[0].v});
+  rows.push({name:'商品売上値引', v: productSplit[1].v});
+  rows.push({name:'商品売上計', v: productTotal, total:true});
+  rows.push({name:'サービス事業収入', v: serviceRevenue});
+  rows.push({name:'リース事業収入', v: leaseRevenue});
+  rows.push({name:'売上高計', v: revenueYen, total:true});
+
+  const cogsSplit = splitExact(cogs, [0.85, 0.15], ['商品売上原価','サービス事業原価']);
+  const productCogs = cogsSplit[0].v, serviceCogs = cogsSplit[1].v;
+  const productCogsSplit = splitExact(productCogs, [0.72, 0.23, 0.05], ['商品仕入','外注費','商品棚卸高']);
+  rows.push({name:'商品仕入', v: -productCogsSplit[0].v});
+  rows.push({name:'外注費', v: -productCogsSplit[1].v});
+  rows.push({name:'商品棚卸高', v: productCogsSplit[2].v});
+  rows.push({name:'商品売上原価', v: -productCogs, total:true});
+  rows.push({name:'サービス事業原価', v: -serviceCogs});
+  rows.push({name:'売上原価', v: -cogs, total:true});
+  rows.push({name:'売上総利益', v: grossProfitYen, total:true});
+
+  const sgnaSplit = splitExact(sgna, [0.55, 0.10, 0.10, 0.25], ['人件費計','戦略費計','管理費計','施設費計']);
+  const personnelTotal = sgnaSplit[0].v, strategyTotal = sgnaSplit[1].v, adminTotal = sgnaSplit[2].v, facilityTotal = sgnaSplit[3].v;
+
+  splitExact(personnelTotal, [0.55,0.08,0.12,0.15,0.05,0.03,0.02], ['社員給与','雑給','社員賞与','法定福利費','福利厚生費','旅費交通費','求人費'])
+    .forEach(r => rows.push({name:r.name, v:-r.v}));
+  rows.push({name:'人件費計', v:-personnelTotal, total:true});
+
+  splitExact(strategyTotal, [0.5,0.3,0.2], ['広告宣伝費','業務委託費','交際費'])
+    .forEach(r => rows.push({name:r.name, v:-r.v}));
+  rows.push({name:'戦略費計', v:-strategyTotal, total:true});
+
+  splitExact(adminTotal, [0.4,0.35,0.25], ['システム管理費','消耗品費','雑費'])
+    .forEach(r => rows.push({name:r.name, v:-r.v}));
+  rows.push({name:'管理費計', v:-adminTotal, total:true});
+
+  splitExact(facilityTotal, [0.3,0.4,0.15,0.15], ['減価償却費','家賃','通信費','水道光熱費'])
+    .forEach(r => rows.push({name:r.name, v:-r.v}));
+  rows.push({name:'施設費計', v:-facilityTotal, total:true});
+
+  rows.push({name:'販売管理費 計', v:-sgna, total:true});
+  rows.push({name:'営業利益', v: opProfitYen, total:true});
+
+  return rows;
+}
+
+function accountBreakdown(valueHyakuman){
+  const opProfitYen = Math.round(valueHyakuman * 1000000);
+  const revenueYen = Math.round(Math.abs(opProfitYen) * 8);
+  const grossProfitYen = Math.round(revenueYen * 0.45);
+  return detailedPL(revenueYen, grossProfitYen, opProfitYen);
+}
+
+function fullPLBreakdown(grossProfitHyakuman, operatingProfitHyakuman) {
+  const grossProfitYen = Math.round(grossProfitHyakuman * 1000000);
+  const opProfitYen = Math.round(operatingProfitHyakuman * 1000000);
+  const revenueYen = Math.round(grossProfitYen / 0.45);
+  return detailedPL(revenueYen, grossProfitYen, opProfitYen);
+}
+
+function formatYen(value) {
+  if (Math.abs(value) >= 100) return (value / 100).toFixed(2) + '億円';
+  return Math.round(value * 100).toLocaleString() + '万円';
+}
+
+function tdNum(v, ctx) {
+  const negStyle = v < 0 ? 'color:var(--bad);' : '';
+  if (ctx) {
+    const storeEsc = ctx.store.replace(/'/g, "\\'");
+    const acctEsc = ctx.account.replace(/'/g, "\\'");
+    return `<td class="clickable" style="${negStyle}" onclick="openLedger('${storeEsc}','${acctEsc}',${v})">${v.toLocaleString()}</td>`;
+  }
+  return `<td${negStyle ? ` style="${negStyle}"` : ''}>${v.toLocaleString()}</td>`;
+}
+
+function acctSearchBox() {
+  return `<input type="text" class="search-box acct-search" placeholder="勘定科目名で検索..." style="width:100%;max-width:none;margin-bottom:8px;">`;
+}
+
+function wireAcctSearch(container) {
+  container.querySelectorAll('.acct-search').forEach(input => {
+    input.addEventListener('input', () => {
+      const scroll = input.nextElementSibling;
+      if (!scroll) return;
+      const table = scroll.querySelector('table');
+      if (!table) return;
+      const q = input.value.trim();
+      [...table.rows].forEach((tr, idx) => {
+        if (idx === 0) return;
+        tr.style.display = (!q || tr.textContent.includes(q)) ? '' : 'none';
+      });
+    });
+  });
+}
+
+const ledgerItems = ['端末販売', 'SIM販売', 'オプション加入', 'キャッシュバック', 'その他'];
+const ledgerDates = ['04/03', '04/09', '04/15', '04/18', '04/22', '04/27'];
+
+let ledgerRowsData = [];
+
+function renderLedgerTable(rows) {
+  const trs = rows.map(r => `<tr>
+    <td>${r.date}</td>
+    <td>${r.item}</td>
+    <td>${r.v.toLocaleString()}</td>
+  </tr>`).join('');
+  const total = rows.reduce((s, r) => s + r.v, 0);
+  const totalRow = `<tr class="total"><td colspan="2">合計（表示中の${rows.length}件）</td><td>${total.toLocaleString()}</td></tr>`;
+  document.getElementById('ledger-modal-table').innerHTML = `<tr><th>取引日</th><th>品目</th><th>金額(円)</th></tr>${trs}${totalRow}`;
+}
+
+function openLedger(storeName, accountName, value) {
+  document.getElementById('ledger-modal-title').textContent = `${storeName} ／ ${accountName} の明細（サンプル）`;
+  const n = 4 + Math.floor(Math.random() * 3);
+  let remaining = value;
+  const parts = [];
+  for (let i = 0; i < n - 1; i++) {
+    const portion = Math.round(remaining / (n - i) * (0.5 + Math.random()));
+    parts.push(portion);
+    remaining -= portion;
+  }
+  parts.push(remaining);
+  ledgerRowsData = parts.map((v, i) => ({
+    date: `2026/${ledgerDates[i % ledgerDates.length]}`,
+    item: ledgerItems[i % ledgerItems.length],
+    v
+  }));
+  const searchBox = document.getElementById('ledger-modal-search');
+  if (searchBox) searchBox.value = '';
+  renderLedgerTable(ledgerRowsData);
+  document.getElementById('ledger-modal').style.display = 'flex';
+}
+
+const ledgerModalSearchBox = document.getElementById('ledger-modal-search');
+if (ledgerModalSearchBox) {
+  ledgerModalSearchBox.addEventListener('input', (e) => {
+    const q = e.target.value.trim();
+    if (!q) { renderLedgerTable(ledgerRowsData); return; }
+    const filtered = ledgerRowsData.filter(r =>
+      r.date.includes(q) || r.item.includes(q) || r.v.toLocaleString().includes(q) || String(r.v).includes(q)
+    );
+    renderLedgerTable(filtered);
+  });
+}
+
+function closeLedgerModal() {
+  document.getElementById('ledger-modal').style.display = 'none';
+}
+
+const BASE_ROWDATA = {
+  companywide: {color: '#1C1C1A', items: [
+    {name:'コンシューマー事業', budget: Math.round(918/0.99), actual: 918},
+    {name:'イメージング事業', budget: Math.round(-66/0.912), actual: -66},
+    {name:'法人事業', budget: Math.round(26/1.043), actual: 26},
+    {name:'ソウゾウ事業（管理）', budget: Math.round(-53/0.885), actual: -53}
+  ]},
+  consumer: {color:'#14406B', items:[
+    {name:'パレットプラザ渋谷店', budget:42, actual:46},
+    {name:'パレットプラザ新宿店', budget:38, actual:35},
+    {name:'パレットプラザ横浜店', budget:30, actual:31},
+    {name:'パレットプラザ川崎店', budget:22, actual:24},
+    {name:'パレットプラザ千葉店', budget:23, actual:22},
+    {name:'パレットプラザ埼玉店', budget:25, actual:21},
+    {name:'パレットプラザ大阪店', budget:26, actual:24},
+    {name:'パレットプラザ京都店', budget:19, actual:18},
+    {name:'パレットプラザ神戸店', budget:21, actual:19},
+    {name:'パレットプラザ名古屋店', budget:28, actual:30},
+    {name:'パレットプラザ静岡店', budget:15, actual:13},
+    {name:'パレットプラザ札幌店', budget:20, actual:17},
+    {name:'パレットプラザ福岡店', budget:24, actual:26},
+    {name:'パレットプラザ仙台店', budget:17, actual:19},
+    {name:'パレットプラザ広島店', budget:16, actual:14}
+  ]},
+  imaging: {color:'#185FA5', items:[
+    {name:'商品企画部', budget:12, actual:9},
+    {name:'スタジオ運営部', budget:18, actual:15},
+    {name:'ラボ部', budget:10, actual:8}
+  ]},
+  corp: {color:'#2E7BC4', items:[
+    {name:'官公庁営業部', budget:14, actual:15},
+    {name:'法人営業部', budget:20, actual:21},
+    {name:'OEM部', budget:8, actual:8}
+  ]},
+  souzou: {color:'#5B9BD9', items:[
+    {name:'情報システム部', budget:9, actual:11},
+    {name:'経営サポート部', budget:7, actual:8},
+    {name:'人事部', budget:6, actual:7}
+  ]}
+};
+
+const CONSUMER_AREA_MAP = {
+  '北日本営業部': ['パレットプラザ仙台店', 'パレットプラザ札幌店'],
+  '関東営業部': ['パレットプラザ渋谷店', 'パレットプラザ新宿店', 'パレットプラザ横浜店', 'パレットプラザ川崎店', 'パレットプラザ千葉店', 'パレットプラザ埼玉店'],
+  '中部営業部': ['パレットプラザ名古屋店', 'パレットプラザ静岡店'],
+  '西日本営業部': ['パレットプラザ大阪店', 'パレットプラザ京都店', 'パレットプラザ神戸店', 'パレットプラザ福岡店', 'パレットプラザ広島店']
+};
+BASE_ROWDATA.consumer_regions = {
+  color: '#14406B',
+  items: Object.keys(CONSUMER_AREA_MAP).map(region => {
+    const members = CONSUMER_AREA_MAP[region];
+    const stores = BASE_ROWDATA.consumer.items.filter(it => members.includes(it.name));
+    return {
+      name: region,
+      budget: stores.reduce((s, it) => s + it.budget, 0),
+      actual: stores.reduce((s, it) => s + it.actual, 0)
+    };
+  })
+};
+
+const REGION_KEY_MAP = {
+  '北日本営業部': 'consumer_kitanihon',
+  '関東営業部': 'consumer_kanto',
+  '中部営業部': 'consumer_chubu',
+  '西日本営業部': 'consumer_nishinihon'
+};
+Object.keys(CONSUMER_AREA_MAP).forEach(region => {
+  const key = REGION_KEY_MAP[region];
+  BASE_ROWDATA[key] = {
+    color: '#185FA5',
+    items: BASE_ROWDATA.consumer.items.filter(it => CONSUMER_AREA_MAP[region].includes(it.name))
+  };
+});
+
+const PERIOD_MONTHS = [];
+(function buildPeriodMonths(){
+  let y = 2024, m = 4;
+  for (let i = 0; i < 36; i++) {
+    PERIOD_MONTHS.push({ label: `${y}年${m}月`, y, m });
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+})();
+
+function monthMultiplier(idx) {
+  const seasonal = [1.08,0.95,0.9,0.97,1.02,1.1,1.05,0.93,0.96,1.0,1.15,0.9];
+  const trend = 0.85 + (idx / (PERIOD_MONTHS.length - 1)) * 0.35;
+  return trend * seasonal[idx % 12];
+}
+
+function populatePeriodSelects() {
+  const fromSel = document.getElementById('from-select');
+  const toSel = document.getElementById('to-select');
+  PERIOD_MONTHS.forEach((mo, idx) => {
+    fromSel.appendChild(new Option(mo.label, idx));
+    toSel.appendChild(new Option(mo.label, idx));
+  });
+  fromSel.value = 24;
+  toSel.value = 24;
+}
+
+function getToIndex() {
+  return parseInt(document.getElementById('to-select').value, 10);
+}
+
+function formatYenFromRaw(yenValue) {
+  return formatYen(yenValue / 1000000);
+}
+
+function plSummaryFromOp(opBaseValue, m) {
+  const opValue = opBaseValue * m;
+  const breakdown = accountBreakdown(opValue);
+  return {
+    revenue: breakdown.find(r => r.name === '売上高計').v,
+    gross: breakdown.find(r => r.name === '売上総利益').v,
+    sgna: -breakdown.find(r => r.name === '販売管理費 計').v,
+    op: breakdown.find(r => r.name === '営業利益').v
+  };
+}
+
+function plSummaryFromPair(grossBaseValue, opBaseValue, m) {
+  const breakdown = fullPLBreakdown(grossBaseValue * m, opBaseValue * m);
+  return {
+    revenue: breakdown.find(r => r.name === '売上高計').v,
+    gross: breakdown.find(r => r.name === '売上総利益').v,
+    sgna: -breakdown.find(r => r.name === '販売管理費 計').v,
+    op: breakdown.find(r => r.name === '営業利益').v
+  };
+}
+
+const ICON_KPI_COLORS = { revenue: '#14406B', gross: '#185FA5', sgna: '#2E7BC4', op: '#5B9BD9' };
+
+function renderIconKpiRow(panelKey, summary) {
+  const container = document.getElementById('iconkpi-' + panelKey);
+  if (!container) return;
+  const toIdx = getToIndex();
+  const prevM = toIdx > 0 ? monthMultiplier(toIdx - 1) : null;
+  const curM = monthMultiplier(toIdx);
+  const pctBase = prevM !== null ? ((curM - prevM) / prevM) * 100 : null;
+
+  const cards = [
+    { label: '売上高', value: summary.revenue, icon: '💰', color: ICON_KPI_COLORS.revenue, pct: pctBase, invert: false },
+    { label: '売上総利益', value: summary.gross, icon: '📊', color: ICON_KPI_COLORS.gross, pct: pctBase !== null ? pctBase * 0.85 : null, invert: false },
+    { label: '販売管理費', value: summary.sgna, icon: '📁', color: ICON_KPI_COLORS.sgna, pct: pctBase !== null ? Math.abs(pctBase) * 0.35 : null, invert: true },
+    { label: '営業利益', value: summary.op, icon: '📈', color: ICON_KPI_COLORS.op, pct: pctBase !== null ? pctBase * 1.3 : null, invert: false }
+  ];
+
+  container.innerHTML = cards.map(c => {
+    let trendHtml = '';
+    if (c.pct !== null) {
+      const up = c.invert ? c.pct <= 0 : c.pct >= 0;
+      const sign = c.pct >= 0 ? '+' : '';
+      trendHtml = `<span class="trend ${up ? 'up' : 'down'}">${c.pct >= 0 ? '↑' : '↓'} ${sign}${c.pct.toFixed(1)}%</span><span class="trend-label">前月比</span>`;
+    }
+    return `
+      <div class="icon-kpi-card">
+        <div class="top-row">
+          <p class="label">${c.label}</p>
+          <div class="icon-badge" style="background:${c.color}22;color:${c.color}">${c.icon}</div>
+        </div>
+        <div class="value" style="color:${c.value < 0 ? 'var(--bad)' : 'var(--ink)'}">${formatYenFromRaw(c.value)}</div>
+        ${trendHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+const PANEL_PL_CONFIG = {
+  all: { op: { actual: 824, budget: 824 / 0.876 }, gross: { actual: 6117, budget: 6117 / 1.134 } },
+  consumer: { op: { actual: 918, budget: 918 / 0.99 } },
+  imaging: { op: { actual: -66, budget: -66 / 0.912 } },
+  corp: { op: { actual: 26, budget: 26 / 1.043 } },
+  souzou: { op: { actual: -53, budget: -53 / 0.885 } }
+};
+try {
+  Object.keys(REGION_KEY_MAP).forEach(region => {
+    const key = REGION_KEY_MAP[region];
+    const item = BASE_ROWDATA.consumer_regions.items.find(it => it.name === region);
+    PANEL_PL_CONFIG[key] = { op: { actual: item.actual, budget: item.budget } };
+  });
+} catch (e) { console.error('PANEL_PL_CONFIG region setup failed', e); }
+
+function panelBreakdownPair(panelKey, mm) {
+  const cfg = PANEL_PL_CONFIG[panelKey];
+  if (!cfg) return null;
+  if (cfg.gross) {
+    return {
+      actual: fullPLBreakdown(cfg.gross.actual * mm, cfg.op.actual * mm),
+      budget: fullPLBreakdown(cfg.gross.budget * mm, cfg.op.budget * mm)
+    };
+  }
+  return {
+    actual: accountBreakdown(cfg.op.actual * mm),
+    budget: accountBreakdown(cfg.op.budget * mm)
+  };
+}
+
+const COMBO_COST_METRICS = ['人件費計'];
+const comboSelectedMetric = {};
+const comboCharts = {};
+function renderComboChart(panelKey) {
+  const canvas = document.getElementById('combo-' + panelKey);
+  if (!canvas) return;
+  const metric = comboSelectedMetric[panelKey] || '営業利益';
+  const toIdx = getToIndex();
+  const labels = [], actualData = [], budgetData = [];
+  for (let i = 4; i >= 0; i--) {
+    const idx = toIdx - i;
+    if (idx < 0 || !PERIOD_MONTHS[idx]) { labels.push(''); actualData.push(null); budgetData.push(null); continue; }
+    labels.push(`${PERIOD_MONTHS[idx].m}月`);
+    const mm = monthMultiplier(idx);
+    const pair = panelBreakdownPair(panelKey, mm);
+    if (!pair) continue;
+    const aRow = pair.actual.find(r => r.name === metric);
+    const bRow = pair.budget.find(r => r.name === metric);
+    let av = aRow ? aRow.v : 0, bv = bRow ? bRow.v : 0;
+    if (COMBO_COST_METRICS.includes(metric)) { av = Math.abs(av); bv = Math.abs(bv); }
+    actualData.push(Math.round(av / 1000000));
+    budgetData.push(Math.round(bv / 1000000));
+  }
+  if (comboCharts[panelKey]) { comboCharts[panelKey].destroy(); }
+  comboCharts[panelKey] = new Chart(canvas, {
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: '予算', data: budgetData, backgroundColor: '#D3D1C7', borderRadius: 4, order: 2 },
+        { type: 'line', label: '実績', data: actualData, borderColor: '#1E7A3D', backgroundColor: '#1E7A3D', tension: 0.3, order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: {
+        legend: { position: 'top', align: 'end', labels: { boxWidth: 10, font: { size: 11 } } },
+        datalabels: { display: false }
+      },
+      scales: {
+        y: { ticks: { callback: v => v.toLocaleString() + '百万' } }
+      }
+    }
+  });
+}
+
+try {
+  document.querySelectorAll('[id^="combo-metric-"]').forEach(sel => {
+    const panelKey = sel.id.replace('combo-metric-', '');
+    comboSelectedMetric[panelKey] = sel.value;
+    sel.addEventListener('change', () => {
+      comboSelectedMetric[panelKey] = sel.value;
+      renderComboChart(panelKey);
+    });
+  });
+} catch (e) { console.error('combo-metric selector wiring failed', e); }
+
+const donutCharts = {};
+const DONUT_COLORS = ['#14406B', '#185FA5', '#2E7BC4', '#5B9BD9', '#8FB8E0', '#B8D4EE', '#3B6FD1', '#0F3D66'];
+function renderDonutChart(panelKey, items, m) {
+  const canvas = document.getElementById('donut-' + panelKey);
+  const legendBox = document.getElementById('donutlegend-' + panelKey);
+  if (!canvas) return;
+  const revenues = items.map(it => {
+    const b = accountBreakdown(it.actual * m);
+    return b.find(r => r.name === '売上高計').v;
+  });
+  const total = revenues.reduce((a, b) => a + b, 0);
+  if (donutCharts[panelKey]) { donutCharts[panelKey].destroy(); }
+  donutCharts[panelKey] = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(it => it.name),
+      datasets: [{ data: revenues, backgroundColor: DONUT_COLORS.slice(0, items.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { display: false }, datalabels: { display: false } }
+    }
+  });
+  if (legendBox) {
+    legendBox.innerHTML = items.map((it, i) => {
+      const pct = total ? (revenues[i] / total * 100) : 0;
+      return `<div class="row"><span class="swatch" style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></span><span class="name">${it.name}</span><span class="pct">${pct.toFixed(0)}%</span></div>`;
+    }).join('');
+  }
+}
+
+function refreshVisuals() {
+  const m = getMultiplier();
+
+  renderIconKpiRow('all', plSummaryFromPair(6117, 824, m));
+  renderComboChart('all');
+  renderDonutChart('all', [
+    { name: 'コンシューマー事業', actual: 918 },
+    { name: 'イメージング事業', actual: -66 },
+    { name: '法人事業', actual: 26 },
+    { name: 'ソウゾウ事業', actual: -53 }
+  ], m);
+
+  renderIconKpiRow('consumer', plSummaryFromOp(918, m));
+  renderComboChart('consumer');
+  renderDonutChart('consumer', BASE_ROWDATA.consumer_regions.items, m);
+
+  Object.keys(REGION_KEY_MAP).forEach(region => {
+    const key = REGION_KEY_MAP[region];
+    const item = BASE_ROWDATA.consumer_regions.items.find(it => it.name === region);
+    renderIconKpiRow(key, plSummaryFromOp(item.actual, m));
+    renderComboChart(key);
+    renderDonutChart(key, BASE_ROWDATA[key].items, m);
+  });
+
+  renderIconKpiRow('imaging', plSummaryFromOp(-66, m));
+  renderComboChart('imaging');
+  renderDonutChart('imaging', BASE_ROWDATA.imaging.items, m);
+
+  renderIconKpiRow('corp', plSummaryFromOp(26, m));
+  renderComboChart('corp');
+  renderDonutChart('corp', BASE_ROWDATA.corp.items, m);
+
+  renderIconKpiRow('souzou', plSummaryFromOp(-53, m));
+  renderComboChart('souzou');
+  renderDonutChart('souzou', BASE_ROWDATA.souzou.items, m);
+}
+
+function getMultiplier() {
+  const fromIdx = parseInt(document.getElementById('from-select').value, 10);
+  const toIdx = parseInt(document.getElementById('to-select').value, 10);
+  const lo = Math.min(fromIdx, toIdx);
+  const hi = Math.max(fromIdx, toIdx);
+  let sum = 0;
+  for (let i = lo; i <= hi; i++) sum += monthMultiplier(i);
+  return sum;
+}
+
+function getYoyMultiplier() {
+  const fromIdx = parseInt(document.getElementById('from-select').value, 10);
+  const toIdx = parseInt(document.getElementById('to-select').value, 10);
+  const lo = Math.min(fromIdx, toIdx) - 12;
+  const hi = Math.max(fromIdx, toIdx) - 12;
+  if (lo < 0) return null;
+  let sum = 0;
+  for (let i = lo; i <= hi; i++) sum += monthMultiplier(i);
+  return sum;
+}
+
+const groupState = {};
+const costMetrics = ['売上原価', '人件費計', '家賃', '広告宣伝費', '管理費計'];
+
+const METRIC_OPTIONS = [
+  {key: 'actual', label: '営業利益（全体）'},
+  {key: '売上高計', label: '売上高'},
+  {key: '売上原価', label: '売上原価'},
+  {key: '売上総利益', label: '売上総利益'},
+  {key: '人件費計', label: '人件費'},
+  {key: '家賃', label: '地代家賃'},
+  {key: '広告宣伝費', label: '広告宣伝費'},
+  {key: '管理費計', label: 'その他経費'}
+];
+const METRIC_COLORS = ['#534AB7', '#185FA5', '#993556', '#3B6D11', '#C77D0A', '#0F8B8D', '#8B4F9F', '#4C4C4C'];
+
+function buildGroup(key) {
+  const base = BASE_ROWDATA[key];
+  const groupColor = base.color || '#333';
+  const resultBox = document.getElementById('result-' + key);
+  const searchBox = document.getElementById('search-' + key);
+  const sortFieldSelect = document.getElementById('sortfield-' + key);
+  const sortDirBtn = document.getElementById('sortdir-' + key);
+  const onlySelectedBtn = document.getElementById('onlyselected-' + key);
+  const chipsBox = document.getElementById('metricchips-' + key);
+  const chartsContainer = document.getElementById('charts-' + key);
+
+  const compareSet = new Set();
+  const MAX_COMPARE = 5;
+  const selectedMetrics = new Set(['actual']);
+  let sortDir = 'desc';
+  let showOnlySelected = false;
+  let externalFilterNames = null;
+  let onSelectionChange = null;
+  let masterRanked = [];
+  let lastVisible = [];
+  let cmpChart = null;
+  let canvas = null;
+  let wrap = null;
+
+  function compareItems(a, b) {
+    const fieldMap = { pct: '_pct', budget: '_budget', actual: '_actual', name: 'name' };
+    const field = fieldMap[sortFieldSelect.value] || sortFieldSelect.value;
+    if (field === 'name') {
+      return sortDir === 'asc' ? a.name.localeCompare(b.name, 'ja') : b.name.localeCompare(a.name, 'ja');
+    }
+    const av = a[field], bv = b[field];
+    return sortDir === 'asc' ? av - bv : bv - av;
+  }
+
+  function computeForMetric(metric) {
+    const m = getMultiplier();
+    const yoyM = getYoyMultiplier();
+    const isCost = costMetrics.includes(metric);
+    return base.items.map(it => {
+      const rawActual = Math.round(it.actual * m);
+      const rawBudget = Math.round(it.budget * m);
+      const yoyRawActual = yoyM !== null ? Math.round(it.actual * yoyM) : null;
+      let displayActual = rawActual, displayBudget = rawBudget, pct;
+      if (metric !== 'actual') {
+        const ab = accountBreakdown(rawActual).find(r => r.name === metric).v;
+        const bb = accountBreakdown(rawBudget).find(r => r.name === metric).v;
+        if (isCost) {
+          displayActual = Math.abs(ab); displayBudget = Math.abs(bb);
+          pct = ((displayBudget - displayActual) / displayBudget) * 100;
+        } else {
+          displayActual = ab; displayBudget = bb;
+          pct = ((displayActual - displayBudget) / displayBudget) * 100;
+        }
+      } else {
+        pct = ((displayActual - displayBudget) / displayBudget) * 100;
+      }
+      return { name: it.name, rawActual, rawBudget, yoyRawActual, budget: displayBudget, actual: displayActual, pct };
+    });
+  }
+
+  function buildMerged() {
+    const metrics = Array.from(selectedMetrics);
+    const primary = metrics[0];
+    const perMetric = {};
+    metrics.forEach(mt => { perMetric[mt] = computeForMetric(mt); });
+    const merged = base.items.map((it, idx) => {
+      const entry = { name: it.name };
+      metrics.forEach(mt => { entry[mt] = perMetric[mt][idx]; });
+      const anyE = entry[primary];
+      entry.rawActual = anyE.rawActual;
+      entry.rawBudget = anyE.rawBudget;
+      entry.yoyRawActual = anyE.yoyRawActual;
+      entry._pct = anyE.pct;
+      entry._budget = anyE.budget;
+      entry._actual = anyE.actual;
+      return entry;
+    });
+    merged.sort(compareItems);
+    return merged;
+  }
+
+  function renderResult() {
+    const picked = masterRanked.filter(i => compareSet.has(i.name));
+    if (picked.length === 0) {
+      resultBox.innerHTML = `<p class="hint-text">グラフの左側にある名前をクリックすると、勘定科目の明細がここに表示されます。複数クリックすると横並びで比較できます（最大${MAX_COMPARE}件）。</p>`;
+      return;
+    }
+    if (picked.length === 1) {
+      const p = picked[0];
+      const ab = accountBreakdown(p.rawActual);
+      const bb = accountBreakdown(p.rawBudget);
+      const rate = (p.rawActual / p.rawBudget) * 100;
+      const good = p.pct >= 0;
+      let yoyHtml = '';
+      if (p.yoyRawActual !== null) {
+        const yoyPct = ((p.rawActual - p.yoyRawActual) / Math.abs(p.yoyRawActual)) * 100;
+        const yoyGood = yoyPct >= 0;
+        yoyHtml = ` <span style="font-size:12px;font-weight:500;color:${yoyGood ? 'var(--good)' : 'var(--bad)'};">（前年同期比 ${yoyGood ? '+' : ''}${yoyPct.toFixed(1)}%）</span>`;
+      }
+      const rows = ab.map((a, i) => `<tr${a.total ? ' class="total"' : ''}>
+        <td>${a.name}</td>${tdNum(a.v, {store: p.name, account: a.name})}${tdNum(bb[i].v)}${tdNum(a.v - bb[i].v)}
+      </tr>`).join('');
+      resultBox.innerHTML = `
+        <div class="result-kpi" style="--accent:${groupColor}">
+          <p class="label">${p.name}</p>
+          <p class="value" style="color:${p.rawActual < 0 ? 'var(--bad)' : ''}">${formatYen(p.rawActual)}</p>
+          <p class="rate" style="color:${good ? 'var(--good)' : 'var(--bad)'}">達成率 ${rate.toFixed(1)}%${yoyHtml}</p>
+          <div class="progress"><div class="fill" style="width:${Math.min(rate,100)}%;background:${good ? 'var(--good)' : 'var(--bad)'};"></div></div>
+        </div>
+        <p class="section-title" style="margin-top:0;">勘定科目明細（円）</p>
+        ${acctSearchBox()}
+        <div class="acct-scroll">
+          <table class="acct-table">
+            <tr><th>勘定科目</th><th>実績(円)</th><th>予算(円)</th><th>差異</th></tr>
+            ${rows}
+          </table>
+        </div>
+      `;
+      wireAcctSearch(resultBox);
+      return;
+    }
+    const breakdowns = picked.map(p => ({name: p.name, rows: accountBreakdown(p.rawActual)}));
+    const acctNames = breakdowns[0].rows.map(r => r.name);
+    const headerCells = breakdowns.map(b => `<th>${b.name}</th>`).join('');
+    const yoyCells = picked.map(p => {
+      if (p.yoyRawActual === null) return '<td>—</td>';
+      const yoyPct = ((p.rawActual - p.yoyRawActual) / Math.abs(p.yoyRawActual)) * 100;
+      const good = yoyPct >= 0;
+      return `<td style="color:${good ? 'var(--good)' : 'var(--bad)'};font-weight:500;">${good ? '+' : ''}${yoyPct.toFixed(1)}%</td>`;
+    }).join('');
+    const bodyRows = acctNames.map((name, idx) => {
+      const isTotal = breakdowns[0].rows[idx].total;
+      const cells = breakdowns.map(b => tdNum(b.rows[idx].v, {store: b.name, account: name})).join('');
+      return `<tr${isTotal ? ' class="total"' : ''}><td>${name}</td>${cells}</tr>`;
+    }).join('');
+    resultBox.innerHTML = `
+      <p class="section-title" style="margin-top:0;">選択した項目の勘定科目比較（実績・円）</p>
+      ${acctSearchBox()}
+      <div class="acct-scroll">
+      <table class="acct-table">
+        <tr><th>勘定科目</th>${headerCells}</tr>
+        <tr><td>前年同期比</td>${yoyCells}</tr>
+        ${bodyRows}
+      </table>
+      </div>
+    `;
+    wireAcctSearch(resultBox);
+  }
+
+  function toggleCompareItem(name) {
+    if (compareSet.has(name)) {
+      compareSet.delete(name);
+    } else {
+      if (compareSet.size >= MAX_COMPARE) {
+        const first = compareSet.values().next().value;
+        compareSet.delete(first);
+      }
+      compareSet.add(name);
+    }
+    renderChart();
+    renderResult();
+    if (onSelectionChange) onSelectionChange(Array.from(compareSet));
+  }
+
+  function ensureCanvas() {
+    if (canvas) return;
+    chartsContainer.innerHTML = '<div class="chart-scroll"><div style="position:relative;"><canvas></canvas></div></div>';
+    wrap = chartsContainer.querySelector('.chart-scroll > div');
+    canvas = chartsContainer.querySelector('canvas');
+
+    canvas.addEventListener('mousemove', (evt) => {
+      if (!cmpChart) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = evt.clientX - rect.left;
+      canvas.style.cursor = x < cmpChart.chartArea.left ? 'pointer' : 'default';
+    });
+    canvas.addEventListener('click', (evt) => {
+      if (!cmpChart) return;
+      const rect = canvas.getBoundingClientRect();
+      const px = evt.clientX - rect.left;
+      const py = evt.clientY - rect.top;
+      if (px >= cmpChart.chartArea.left) return;
+      const idx = Math.round(cmpChart.scales.y.getValueForPixel(py));
+      const item = lastVisible[idx];
+      if (!item) return;
+      toggleCompareItem(item.name);
+    });
+  }
+
+  function renderChart() {
+    ensureCanvas();
+    masterRanked = buildMerged();
+    let base_visible = masterRanked;
+    if (externalFilterNames) {
+      base_visible = base_visible.filter(i => externalFilterNames.includes(i.name));
+    }
+    let visible;
+    if (showOnlySelected && compareSet.size > 0) {
+      visible = base_visible.filter(i => compareSet.has(i.name));
+    } else {
+      const q = searchBox.value.trim();
+      visible = q ? base_visible.filter(i => i.name.includes(q)) : base_visible;
+    }
+    lastVisible = visible;
+    const metrics = Array.from(selectedMetrics);
+    const labels = visible.map(i => i.name);
+    const selectedRows = visible.map((i, idx) => compareSet.has(i.name) ? idx : -1).filter(idx => idx >= 0);
+    wrap.style.height = Math.max(140, 50 + visible.length * (36 + metrics.length * 26)) + 'px';
+
+    let datasets;
+    if (metrics.length === 1) {
+      const mt = metrics[0];
+      const budgets = visible.map(i => i[mt].budget);
+      const actuals = visible.map(i => i[mt].actual);
+      const colors = visible.map(i => i[mt].pct >= 0 ? '#1E7A3D' : '#C23B3B');
+      datasets = [
+        {label: '予算', data: budgets, backgroundColor: '#D3D1C7', barPercentage: 0.7, categoryPercentage: 0.7},
+        {label: '実績', data: actuals, backgroundColor: colors, barPercentage: 0.7, categoryPercentage: 0.7}
+      ];
+    } else {
+      datasets = [];
+      metrics.forEach((mt, i) => {
+        const label = METRIC_OPTIONS.find(o => o.key === mt).label;
+        const color = METRIC_COLORS[i % METRIC_COLORS.length];
+        datasets.push({
+          label: `予算：${label}`,
+          data: visible.map(v => v[mt].budget),
+          backgroundColor: '#D3D1C7',
+          barPercentage: 0.8, categoryPercentage: 0.8
+        });
+        datasets.push({
+          label: `実績：${label}`,
+          data: visible.map(v => v[mt].actual),
+          backgroundColor: color,
+          barPercentage: 0.8, categoryPercentage: 0.8
+        });
+      });
+    }
+
+    if (cmpChart) {
+      try { cmpChart.destroy(); } catch (e) { console.error('chart destroy failed', e); }
+      cmpChart = null;
+    }
+    try {
+      const existing = Chart.getChart ? Chart.getChart(canvas) : null;
+      if (existing) existing.destroy();
+    } catch (e) { console.error('existing chart cleanup failed', e); }
+
+    cmpChart = new Chart(canvas, {
+      type: 'bar',
+      data: { labels, datasets },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+          datalabels: {
+            anchor: 'end', align: 'end', color: '#1C1C1A', font: { size: 10, weight: '500' },
+            formatter: v => (v === undefined || v === null || isNaN(v)) ? '' : v.toLocaleString()
+          }
+        },
+        scales: {
+          x: { ticks: { callback: v => v + '百万' } },
+          y: { ticks: { font: { size: 12 } } }
+        }
+      }
+    });
+    cmpChart.$selectedRows = selectedRows;
+    cmpChart.update();
+  }
+
+  function refresh() {
+    try { renderChart(); }
+    catch (e) { console.error('renderChart failed for', key, e); }
+    renderResult();
+  }
+
+  METRIC_OPTIONS.forEach(o => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (selectedMetrics.has(o.key) ? ' active' : '');
+    chip.textContent = o.label;
+    chip.addEventListener('click', () => {
+      if (selectedMetrics.has(o.key)) {
+        if (selectedMetrics.size <= 1) return;
+        selectedMetrics.delete(o.key);
+        chip.classList.remove('active');
+      } else {
+        selectedMetrics.add(o.key);
+        chip.classList.add('active');
+      }
+      refresh();
+    });
+    chipsBox.appendChild(chip);
+  });
+
+  searchBox.addEventListener('input', refresh);
+  sortFieldSelect.addEventListener('change', refresh);
+  sortDirBtn.addEventListener('click', () => {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    sortDirBtn.textContent = sortDir === 'asc' ? '▲' : '▼';
+    refresh();
+  });
+  onlySelectedBtn.addEventListener('click', () => {
+    showOnlySelected = !showOnlySelected;
+    onlySelectedBtn.classList.toggle('active', showOnlySelected);
+    refresh();
+  });
+
+  refresh();
+  groupState[key] = {
+    refresh,
+    setExternalFilter(names) { externalFilterNames = names; refresh(); },
+    setOnSelectionChange(cb) { onSelectionChange = cb; },
+    toggleItem(name) { toggleCompareItem(name); }
+  };
+}
+
+populatePeriodSelects();
+Object.keys(BASE_ROWDATA).forEach(k => {
+  try { buildGroup(k); }
+  catch (e) { console.error('buildGroup failed for', k, e); }
+});
+
+if (groupState.consumer_regions && groupState.consumer) {
+  const filterIndicator = document.getElementById('regionfilter-consumer');
+  const regionCards = document.querySelectorAll('#region-grid .div-card');
+
+  regionCards.forEach(card => {
+    card.addEventListener('click', () => {
+      groupState.consumer_regions.toggleItem(card.dataset.region);
+    });
+  });
+
+  groupState.consumer_regions.setOnSelectionChange((selectedRegions) => {
+    regionCards.forEach(card => {
+      card.classList.toggle('selected', selectedRegions.includes(card.dataset.region));
+    });
+    if (!selectedRegions.length) {
+      groupState.consumer.setExternalFilter(null);
+      if (filterIndicator) filterIndicator.innerHTML = '';
+      return;
+    }
+    const storeNames = selectedRegions.flatMap(r => CONSUMER_AREA_MAP[r] || []);
+    groupState.consumer.setExternalFilter(storeNames);
+    if (filterIndicator) {
+      filterIndicator.innerHTML = `<p class="hint-text" style="margin-bottom:8px;">絞り込み中: <strong>${selectedRegions.join('、')}</strong> の店舗のみ表示しています（営業部のチップをもう一度クリックすると解除されます）</p>`;
+    }
+  });
+}
+
+function refreshRegionGrid() {
+  const m = getMultiplier();
+  document.querySelectorAll('#region-grid .div-card').forEach(card => {
+    const region = card.dataset.region;
+    const item = BASE_ROWDATA.consumer_regions.items.find(it => it.name === region);
+    if (!item) return;
+    const actual = Math.round(item.actual * m);
+    const budget = Math.round(item.budget * m);
+    const rate = (actual / budget) * 100;
+    const good = actual >= budget;
+    const valueEl = card.querySelector('.value');
+    const rateEl = card.querySelector('.rate');
+    valueEl.textContent = formatYen(actual);
+    valueEl.style.color = actual < 0 ? 'var(--bad)' : '';
+    rateEl.textContent = '達成率 ' + rate.toFixed(1) + '%';
+    rateEl.style.color = good ? 'var(--good)' : 'var(--bad)';
+  });
+}
+
+function refreshKpiCards() {
+  const m = getMultiplier();
+  const yoyM = getYoyMultiplier();
+
+  const opCard = document.querySelector('.kpi-card[data-key="all-op"]');
+  const grossCard = document.querySelector('.kpi-card[data-key="all-gross"]');
+  let sharedPair = null;
+  if (opCard && grossCard) {
+    const opActual = parseFloat(opCard.dataset.baseValue) * m;
+    const opRate = parseFloat(opCard.dataset.baseRate);
+    const opBudget = opActual / (opRate / 100);
+    const grossActual = parseFloat(grossCard.dataset.baseValue) * m;
+    const grossRate = parseFloat(grossCard.dataset.baseRate);
+    const grossBudget = grossActual / (grossRate / 100);
+    sharedPair = {
+      actualBreak: fullPLBreakdown(grossActual, opActual),
+      budgetBreak: fullPLBreakdown(grossBudget, opBudget)
+    };
+  }
+
+  document.querySelectorAll('.kpi-card[data-base-value]').forEach(card => {
+    const baseValue = parseFloat(card.dataset.baseValue);
+    const baseRate = parseFloat(card.dataset.baseRate);
+    const value = baseValue * m;
+    const rate = baseRate;
+    const valueEl = card.querySelector('.value');
+    valueEl.textContent = formatYen(value);
+    valueEl.style.color = value < 0 ? 'var(--bad)' : '';
+
+    let yoyHtml = '';
+    if (yoyM !== null) {
+      const yoyValue = baseValue * yoyM;
+      const yoyPct = ((value - yoyValue) / Math.abs(yoyValue)) * 100;
+      const yoyGood = yoyPct >= 0;
+      yoyHtml = ` <span style="color:${yoyGood ? 'var(--good)' : 'var(--bad)'};font-weight:500;">（前年同期比 ${yoyGood ? '+' : ''}${yoyPct.toFixed(1)}%）</span>`;
+    }
+    card.querySelector('.rate').innerHTML = '達成率 ' + rate.toFixed(1) + '%' + yoyHtml;
+    const isGood = card.querySelector('.rate').classList.contains('good');
+    const progressFill = card.querySelector('.progress .fill');
+    if (progressFill) progressFill.style.width = Math.min(rate, 100) + '%';
+
+    let actualBreak, budgetBreak;
+    if (!card.classList.contains('no-expand')) {
+      if (sharedPair && card.dataset.key === 'all-op') {
+        actualBreak = sharedPair.actualBreak;
+        budgetBreak = sharedPair.budgetBreak;
+      } else {
+        const budget = value / (rate / 100);
+        actualBreak = accountBreakdown(value);
+        budgetBreak = accountBreakdown(budget);
+      }
+      const labelText = card.querySelector('.label').textContent.replace('▶', '').trim();
+      const detailRows = actualBreak.map((a, i) => {
+        const b = budgetBreak[i];
+        return `<tr${a.total ? ' class="total"' : ''}>
+          <td>${a.name}</td>${tdNum(a.v, {store: labelText, account: a.name})}${tdNum(Math.round(b.v))}${tdNum(Math.round(a.v - b.v))}
+        </tr>`;
+      }).join('');
+      const detailBox = document.getElementById('kpidetail-' + card.dataset.key);
+      if (detailBox) {
+        detailBox.innerHTML = `<p class="section-title" style="margin-top:0;">${labelText} の勘定科目明細（円）</p>${acctSearchBox()}<div class="acct-scroll"><table class="acct-table"><tr><th>勘定科目</th><th>実績(円)</th><th>予算(円)</th><th>差異</th></tr>${detailRows}</table></div>`;
+        wireAcctSearch(detailBox);
+      }
+    }
+  });
+
+  const divVals = document.querySelectorAll('#div-grid .div-card .value');
+  const divBase = [918, -66, 26, -53];
+  divVals.forEach((el, i) => {
+    const v = divBase[i] * m;
+    el.textContent = formatYen(v);
+    el.style.color = v < 0 ? 'var(--bad)' : '';
+  });
+}
+
+document.querySelectorAll('.kpi-card[data-base-value]').forEach(card => {
+  const bar = document.createElement('div');
+  bar.className = 'progress';
+  bar.innerHTML = `<div class="fill"></div>`;
+  card.querySelector('.head').appendChild(bar);
+  if (card.classList.contains('no-expand')) return;
+  card.querySelector('.head').addEventListener('click', () => {
+    card.classList.toggle('open');
+    const detailBox = document.getElementById('kpidetail-' + card.dataset.key);
+    if (detailBox) detailBox.classList.toggle('show', card.classList.contains('open'));
+  });
+});
+
+function refreshAll() {
+  try { refreshKpiCards(); } catch (e) { console.error('refreshKpiCards failed', e); }
+  try { refreshRegionGrid(); } catch (e) { console.error('refreshRegionGrid failed', e); }
+  try { refreshVisuals(); } catch (e) { console.error('refreshVisuals failed', e); }
+  Object.keys(groupState).forEach(key => {
+    try { groupState[key].refresh(); }
+    catch (e) { console.error('refresh failed for', key, e); }
+  });
+}
+
+document.getElementById('from-select').addEventListener('change', refreshAll);
+document.getElementById('to-select').addEventListener('change', refreshAll);
+refreshAll();
+
+const months = ['2025/10','2025/11','2025/12','2026/01','2026/02','2026/03'];
+new Chart(document.getElementById('chart-all'), {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [
+      {label:'コンシューマー事業', data:[10,-5,28,4,38,42], backgroundColor:'#14406B'},
+      {label:'イメージング事業', data:[-3,-8,-2,1,-4,-6], backgroundColor:'#185FA5'},
+      {label:'法人事業', data:[2,3,1,2,3,2], backgroundColor:'#2E7BC4'},
+      {label:'ソウゾウ事業', data:[-1,-2,-1,-3,-2,-5], backgroundColor:'#8FB8E0'}
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }, datalabels: { display: false } },
+    scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => v + '百万' } } }
+  }
+});
+</script>
+
+</body>
+</html>
